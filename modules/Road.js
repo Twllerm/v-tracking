@@ -16,6 +16,12 @@ class Road extends Module {
     this.nCars = nCars;
   }
 
+  addBindings() {
+    super.addBindings();
+    this.drawCar = this.drawCar.bind(this);
+    this.drawCars = this.drawCars.bind(this);
+  }
+
   mount() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
@@ -34,11 +40,17 @@ class Road extends Module {
 
     this.drawLanes();
 
-    this.drawCars(time);
+    if (!this.cars) {
+      this.drawCars();
+    }
+
+
+    this.cars.forEach(car => car.update(time));
   }
 
   drawLanes() {
     this.ctx.beginPath();
+    this.ctx.fillStyle = '#000';
     this.ctx.rect(0, 0, this.height, CONSTANTS.width);
     this.ctx.fill();
 
@@ -51,28 +63,36 @@ class Road extends Module {
 
   drawLane(pos) {
     this.ctx.beginPath();
+    this.ctx.strokeStyle = '#000';
+    this.ctx.fillStyle = '#000';
     this.ctx.setLineDash([5]);
     this.ctx.rect(0, pos * 40, this.height, 0);
     this.ctx.stroke();
   }
 
-  drawDottedLine(x) {
-    const segments = this.width / 100;
 
-    for (let i = 0; i <= segments; i += 1) {
-      this.ctx.beginPath();
+  drawCars(nCars = 10) {
+    this.cars = _.range(nCars).map(n => this.drawCar(n, 4, 'constVel', n === 9));
+    this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
+  }
+
+  drawCar(nLine, nLines = 4, type = 'constVel', isObserver) {
+    const y = (nLine % nLines) * 40 + Math.random() * 15;
+
+    switch (type) {
+      case 'constVel':
+        return new Car(this.canvas, this.ctx, {
+          x: Math.random() * 100,
+          y,
+          movingModel: type,
+          movingParams: { velocity: Math.random() * 0.001 },
+          isObserver,
+        });
+      default:
+        return null;
     }
   }
-
-  drawCars(time) {
-    this.cars = _.range(this.nCars).map(n => this.drawCar(n, time));
-  }
-
-  drawCar(nLine, x = 0) {
-    this.ctx.beginPath();
-    this.ctx.rect(x, nLine * 40 + 15, 20, 10);
-    this.ctx.fill();
-  }
 }
+
 
 module.exports = Road;

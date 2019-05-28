@@ -4,7 +4,7 @@ class Module {
     this.ctx = ctx;
 
     this.addBindings();
-    this.update();
+    // this.update();
     this.mount();
   }
 
