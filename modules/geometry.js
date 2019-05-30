@@ -1,4 +1,5 @@
 // eslint-disable-next-line import/prefer-default-export
+const _ = require('lodash');
 
 function Point(x, y) {
   this.x = x;
@@ -6,12 +7,13 @@ function Point(x, y) {
   this.parent = null;
 }
 
-function Wall(p1, p2) {
+function Wall(p1, p2, objectId) {
   this.p1 = p1;
   this.p2 = p2;
   this.p1.parent = this;
   this.p2.parent = this;
   this.points = [p1, p2];
+  this.objectId = objectId;
 
   this.length = function () {
     return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -64,6 +66,7 @@ function Wall(p1, p2) {
 
 function getHitpoints(fromX, fromY, walls) {
   const hitpoints = [];
+  const ids = [];
   // For every wall...
   for (let i = 0; i < walls.length; i++) {
     const wall = walls[i];
@@ -74,28 +77,32 @@ function getHitpoints(fromX, fromY, walls) {
       if (j == 1) closestPoint = wall.p2;
       const ray = new Wall(new Point(fromX, fromY), new Point(closestPoint.x, closestPoint.y));
       let minDistance = ray.length();
+      let interId = wall.objectId;
       // Check every wall for intersection
       for (let k = 0; k < walls.length; k++) {
         const checkWall = walls[k];
-        if (wall != checkWall) {
+        if (wall !== checkWall) {
           if (checkWall.intersectsWith(ray)) {
             // If checkWall intersects with our ray we have to check it's intersection point's distance
             // If the distance is smaller than the current minimum set intersectionPoint as the closest
             // point and save the distance.
             const intersectionPoint = checkWall.intersectionPoint(ray);
+            const checkId = checkWall.objectId;
             const tempRay = new Wall(new Point(fromX, fromY), new Point(intersectionPoint.x, intersectionPoint.y));
             if (tempRay.length() < minDistance) {
               closestPoint = intersectionPoint;
               minDistance = tempRay.length();
+              interId = checkId;
             }
           }
         }
       }
       hitpoints.push(closestPoint);
+      ids.push(interId);
     }
   }
 
-  return hitpoints;
+  return [hitpoints, _.uniq(ids)];
 }
 
 

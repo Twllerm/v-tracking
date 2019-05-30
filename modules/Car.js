@@ -1,8 +1,7 @@
 
-
-const _ = require('lodash');
 const Module = require('./Module');
 const { Wall, Point, getHitpoints } = require('./geometry');
+const { CarModel, ParticleFilter } = require('./Filter');
 // const carAsset = require('../assets/car.svg');
 
 const CONSTANTS = {
@@ -17,17 +16,15 @@ class Car extends Module {
     movingParams = {},
     movingModel = 'constVel',
     isObserver = false,
+    particles = 0,
   }) {
     super(canvas, ctx);
-
-    this.id = Math.random();
-
-    this.y = y;
-    this.movingParams = movingParams;
-    this.movingModel = movingModel;
-    this.x = x;
+    this.model = new CarModel(x, y, movingModel, movingParams);
     this.scene = [];
     this.isObserver = isObserver;
+    this.isVisible = true;
+    this.zTrack = [];
+    this.particles = particles;
 
     const img = new Image();
 
@@ -38,6 +35,21 @@ class Car extends Module {
     };
   }
 
+  get x() {
+    return this.model.x;
+  }
+
+  get y() {
+    return this.model.y;
+  }
+
+  get id() {
+    return this.model.id;
+  }
+
+  get state() {
+    return this.model.state;
+  }
 
   mount() {
     this.draw();
@@ -48,7 +60,16 @@ class Car extends Module {
   }
 
   update(time) {
-    this[this.movingModel](time);
+    this.model.move(time);
+
+    if (this.isVisible) {
+      this.zTrack.push(this.model.state);
+    }
+
+    if (this.filter) {
+      this.filter.update(time, this.model.state);
+    }
+
     this.draw();
   }
 
@@ -56,28 +77,67 @@ class Car extends Module {
     this.x += time * this.movingParams.velocity;
   }
 
+  setVisibility(isVisible) {
+    if (isVisible && !this.filter && this.particles && this.zTrack.length > 5) {
+      this.filter = new ParticleFilter(this.particles, this.zTrack);
+    }
+
+    this.isVisible = isVisible;
+  }
+
   draw() {
+    if (!this.model) {
+      return;
+    }
+
     if (this.img) {
+	    this.ctx.save();
+
+      if (!this.isVisible) {
+        this.ctx.globalAlpha = 0.5;
+      }
+
       this.ctx.drawImage(this.img, this.x, this.y);
+      this.ctx.restore();
+    }
+
+    if (this.filter) {
+      this.ctx.save();
+      this.ctx.fillStyle = '#0000FF';
+      // console.log(this.filter.state);
+      this.ctx.rect(this.filter.state.x, this.filter.state.y, 40, 20);
+      this.ctx.fill();
+      this.ctx.restore();
+
+      const partStates = this.filter.particlesState;
+
+      partStates.forEach((p) => {
+        this.ctx.save();
+        this.ctx.fillStyle = '#0000FF';
+        this.ctx.globalAlpha = p.weight;
+        // console.log(this.filter.state);
+        this.ctx.rect(p.x, p.y, 40, 20);
+        this.ctx.fill();
+        this.ctx.restore();
+      });
     }
 
     const width = 40;
     const height = 20;
 
     this.bounds = [
-	 // left
-	  new Wall(new Point(this.x, this.y), new Point(this.x, this.y + height)),
-	  // bottom
-	  new Wall(new Point(this.x, this.y + height), new Point(this.x + width, this.y + height)),
-	  // right
-	  new Wall(new Point(this.x + width, this.y + height), new Point(this.x + width, this.y)),
-	  // top
-	  new Wall(new Point(this.x, this.y), new Point(this.x + width, this.y)),
+	    // left
+      new Wall(new Point(this.x, this.y), new Point(this.x, this.y + height), this.id),
+      // bottom
+      new Wall(new Point(this.x, this.y + height), new Point(this.x + width, this.y + height), this.id),
+      // right
+      new Wall(new Point(this.x + width, this.y + height), new Point(this.x + width, this.y), this.id),
+      // top
+      new Wall(new Point(this.x, this.y), new Point(this.x + width, this.y), this.id),
     ];
 
     const fromX = this.x + width / 2;
     const fromY = this.y + height / 2;
-
 
     // Render all the walls
     this.ctx.beginPath();
@@ -94,10 +154,6 @@ class Car extends Module {
     if (this.isObserver) {
       this.observeScene();
     }
-
-    // this.ctx.beginPath();
-    // this.ctx.rect(this.x, this.y, 40, 20);
-    // this.ctx.fill();
   }
 
   observeScene() {
@@ -105,24 +161,28 @@ class Car extends Module {
 
     const allBounds = this.scene.reduce((acc, car) => acc.concat(car.bounds), []);
 
-	  const fromX = this.x + width / 2;
-	  const fromY = this.y + height / 2;
+    const fromX = this.x + width / 2;
+    const fromY = this.y + height / 2;
 
-	  const hitpoints = getHitpoints(fromX, fromY, allBounds);
+    const [hitpoints, hitIds] = getHitpoints(fromX, fromY, allBounds);
 
-	  this.ctx.beginPath();
-	  this.ctx.fillStyle = '#0000FF';
-	  this.ctx.strokeStyle = '#FF0000';
+    this.ctx.beginPath();
+    this.ctx.fillStyle = '#0000FF';
+    this.ctx.strokeStyle = '#FF0000';
 
-	  for (let i = 0; i < hitpoints.length; i++) {
+    for (let i = 0; i < hitpoints.length; i++) {
       const hitpoint = hitpoints[i];
       this.ctx.moveTo(fromX, fromY);
       this.ctx.lineTo(hitpoint.x, hitpoint.y);
       this.ctx.fillRect(hitpoint.x - 2.5, hitpoint.y - 2.5, 5, 5);
-	  }
+    }
 
-	  this.ctx.stroke();
-	  this.ctx.restore();
+    this.ctx.stroke();
+    this.ctx.restore();
+
+
+    this.scene.filter(car => !hitIds.includes(car.id)).forEach(car => car.setVisibility(false));
+    this.scene.filter(car => hitIds.includes(car.id)).forEach(car => car.setVisibility(true));
   }
 }
 

@@ -25,11 +25,16 @@ class Road extends Module {
   mount() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
+    window.scroll(0, window.innerHeight);
 
     this.drawLanes();
     this.drawCars();
 
+
     this.interval = this.simulation(this.update);
+    // window.setInterval(() => {
+
+    // }, 300);
   }
 
 
@@ -46,18 +51,21 @@ class Road extends Module {
 
 
     this.cars.forEach(car => car.update(time));
+
+    const observer = this.cars.find(car => car.isObserver);
+    window.scroll(0, window.innerHeight - observer.x);
   }
 
   drawLanes() {
     this.ctx.beginPath();
     this.ctx.fillStyle = '#000';
-    this.ctx.rect(0, 0, this.height, CONSTANTS.width);
+    this.ctx.rect(0, 0, this.width, CONSTANTS.width);
     this.ctx.fill();
 
     _.range(this.nLines).map(i => this.drawLane(i));
 
     this.ctx.beginPath();
-    this.ctx.rect(0, this.nLines * 40, this.height, CONSTANTS.width);
+    this.ctx.rect(0, this.nLines * 40, this.width, CONSTANTS.width);
     this.ctx.fill();
   }
 
@@ -66,18 +74,19 @@ class Road extends Module {
     this.ctx.strokeStyle = '#000';
     this.ctx.fillStyle = '#000';
     this.ctx.setLineDash([5]);
-    this.ctx.rect(0, pos * 40, this.height, 0);
+    this.ctx.rect(0, pos * 40, this.width, 0);
     this.ctx.stroke();
   }
 
 
-  drawCars(nCars = 10) {
-    this.cars = _.range(nCars).map(n => this.drawCar(n, 4, 'constVel', n === 9));
+  drawCars(nCars = 2) {
+    this.cars = _.range(nCars).map(n => this.drawCar(n, 4, 'constVel', n === 1, n === 0));
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
-  drawCar(nLine, nLines = 4, type = 'constVel', isObserver) {
+  drawCar(nLine, nLines = 4, type = 'constVel', isObserver, useFilter) {
     const y = (nLine % nLines) * 40 + Math.random() * 15;
+
 
     switch (type) {
       case 'constVel':
@@ -85,13 +94,27 @@ class Road extends Module {
           x: Math.random() * 100,
           y,
           movingModel: type,
-          movingParams: { velocity: Math.random() * 0.001 },
+          movingParams: { velocity: getRandomArbitrary(0.001, 0.003) },
           isObserver,
+          particles: useFilter ? 30 : 0,
         });
       default:
         return null;
     }
   }
+
+  cameraFollow() {
+    const observer = this.cars.find(car => car.isObserver);
+    const { x, y } = observer;
+
+    this.ctx.save();
+    this.ctx.translate(x - this.width / 2, y - this.height / 2);
+    this.ctx.restore();
+  }
+}
+
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
 
