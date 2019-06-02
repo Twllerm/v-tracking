@@ -43,9 +43,8 @@ class Road extends Module {
       const x = event.pageX - elemLeft - 30;
       const y = event.pageY - elemTop;
 
-      console.log(y, x);
 
-      addCar(y, x / 40, 'constVel');
+      addCar(800 - y, x, 'constVel');
     });
 
     // window.setInterval(() => {
@@ -96,12 +95,14 @@ class Road extends Module {
 
 
   drawCars(nCars = 2) {
-    this.cars = _.range(nCars).map(n => this.drawCar(null, (n % 4) * 40 + Math.random() * 15, n === 1 ? 'followForce' : 'constVel', n === 1, n === 0));
+    this.cars = _.range(nCars).map(n => this.drawCar(null, (n % 4) * 40 + Math.random() * 15, n === 1 ? 'idm' : 'constVel', n === 1, n === 0));
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
   addCar(...args) {
-    this.cars.push(this.drawCar(...args));
+    const newCar = this.drawCar(...args);
+    newCar.mount();
+    this.cars.push(newCar);
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
@@ -112,7 +113,7 @@ class Road extends Module {
           x: x || getRandomArbitrary(10, 300),
           y,
           movingModel: type,
-          movingParams: { velocity: getRandomArbitrary(0.001, 0.003) },
+          movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
           isObserver,
           particles: useFilter ? 100 : 0,
         });
@@ -121,7 +122,7 @@ class Road extends Module {
           x: x || getRandomArbitrary(10, 300),
           y,
           movingModel: type,
-          movingParams: { velocity: getRandomArbitrary(0.001, 0.003) },
+          movingParams: { velocity: getRandomArbitrary(0.5, 2) },
           isObserver,
           particles: useFilter ? 100 : 0,
         });

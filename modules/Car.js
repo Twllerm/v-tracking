@@ -162,6 +162,7 @@ class Car extends Module {
       new Wall(new Point(this.x, this.y), new Point(this.x + width, this.y), this.id),
     ];
 
+
     const fromX = this.x + width / 2;
     const fromY = this.y + height / 2;
 

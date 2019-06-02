@@ -64,24 +64,24 @@ function IDM(aState, bState) {
   const xDiff = aState.x - bState.x;
   const yDiff = aState.y - bState.y;
 
-  if (Math.abs(yDiff) > 10) {
+  if (Math.abs(yDiff) > 35) {
     return 0;
   }
 
 
-  if (xDiff < 0) {
-    return 0;
-  }
+  // if (xDiff < 0) {
+  //   return 0;
+  // }
 
   const a = 0.01;
-  const b = 0.003;
-  const T = 1.5;
+  const b = 0.005;
+  const T = 0.3;
   const bet = 4;
-  const s0 = 3;
-  const v0 = 0.003;
+  const s0 = 60;
+  const v0 = 1.5;
   const dva = bState.velocity - aState.velocity;
   const va = aState.velocity;
-  const v = aState.velocity;
+  const v = bState.velocity;
   const s = bState.x - aState.x;
 
   const sh = s0 + va * T + ((va * dva) / (2 * Math.sqrt(a * b)));
@@ -104,7 +104,9 @@ class CarModel {
     this.movingParams = movingParams;
     this.movingModel = movingModel;
     this.velocity = movingParams.velocity;
+    this.accel = movingParams.accel;
     this.x = x;
+    this.x0 = x;
     this.id = Math.random();
     this.weight = 1;
     this.isParticle = isParticle;
@@ -117,7 +119,7 @@ class CarModel {
   }
 
   constVel(time) {
-    this.x += time * this.velocity;
+    this.x = (time * this.velocity) + this.x0;
   }
 
   updateScene(scene) {
@@ -131,11 +133,16 @@ class CarModel {
   //   this.constVel(time);
   // }
 
-  followForce(time) {
+  accel(time) {
+    this.velocity += this.accel;
+    this.constVel(time);
+  }
+
+  idm(time) {
     // const forces = this.scene.map(car => followForce(this.state, car.state));
 
     const directInFront = this.scene.map((car) => {
-      if (Math.abs(car.state.y - this.state.y) > 10 || this.state.x - car.state.x < 0) {
+      if (Math.abs(car.state.y - this.state.y) > 10 || car.state.x - this.state.x < 0) {
         return Infinity;
       }
       return car.state.x - this.state.x;
