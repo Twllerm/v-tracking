@@ -9,6 +9,9 @@ class Renderer {
   constructor() {
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
+    this.ctx._onClick = (func) => {
+      this.canvas.addEventListener('click', func);
+    };
     this.width = null;
     this.height = null;
     this.addBindings();

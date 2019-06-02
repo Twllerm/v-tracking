@@ -32,6 +32,22 @@ class Road extends Module {
 
 
     this.interval = this.simulation(this.update);
+
+    const addCar = this.addCar.bind(this);
+
+    this.ctx._onClick((event) => {
+      const elem = this.canvas;
+      const elemLeft = elem.offsetLeft;
+      const elemTop = elem.offsetTop;
+
+      const x = event.pageX - elemLeft - 30;
+      const y = event.pageY - elemTop;
+
+      console.log(y, x);
+
+      addCar(y, x / 40, 'constVel');
+    });
+
     // window.setInterval(() => {
 
     // }, 300);
@@ -80,23 +96,34 @@ class Road extends Module {
 
 
   drawCars(nCars = 2) {
-    this.cars = _.range(nCars).map(n => this.drawCar(n, 4, 'constVel', n === 1, n === 0));
+    this.cars = _.range(nCars).map(n => this.drawCar(null, (n % 4) * 40 + Math.random() * 15, n === 1 ? 'followForce' : 'constVel', n === 1, n === 0));
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
-  drawCar(nLine, nLines = 4, type = 'constVel', isObserver, useFilter) {
-    const y = (nLine % nLines) * 40 + Math.random() * 15;
+  addCar(...args) {
+    this.cars.push(this.drawCar(...args));
+    this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
+  }
 
-
+  drawCar(x = null, y, type = 'constVel', isObserver, useFilter) {
     switch (type) {
       case 'constVel':
         return new Car(this.canvas, this.ctx, {
-          x: Math.random() * 100,
+          x: x || getRandomArbitrary(10, 300),
           y,
           movingModel: type,
           movingParams: { velocity: getRandomArbitrary(0.001, 0.003) },
           isObserver,
-          particles: useFilter ? 30 : 0,
+          particles: useFilter ? 100 : 0,
+        });
+      case 'followForce':
+        return new Car(this.canvas, this.ctx, {
+          x: x || getRandomArbitrary(10, 300),
+          y,
+          movingModel: type,
+          movingParams: { velocity: getRandomArbitrary(0.001, 0.003) },
+          isObserver,
+          particles: useFilter ? 100 : 0,
         });
       default:
         return null;

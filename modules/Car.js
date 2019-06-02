@@ -57,9 +57,27 @@ class Car extends Module {
 
   updateScene(scene) {
     this.scene = scene;
+    this.model.updateScene(scene);
   }
 
+  getL1Metrik() {
+    const { x: xFilter, y: yFilter } = this.filter.state;
+    const { x, y } = this.model;
+
+    return Math.sqrt(((x - xFilter) ** 2) + ((y - yFilter) ** 2));
+  }
+
+  getL2Metrik() {
+    const l1Metrik = this.getL1Metrik();
+    return l1Metrik * this.zTrack.length;
+  }
+
+
   update(time) {
+    // if (time > 200) {
+    //   this.setVisibility(false);
+    // }
+
     this.model.move(time);
 
     if (this.isVisible) {
@@ -67,10 +85,18 @@ class Car extends Module {
     }
 
     if (this.filter) {
-      this.filter.update(time, this.model.state);
+      this.filter.update(time, this.isVisible ? this.model.state : null);
     }
 
     this.draw();
+
+    if (this.filter) {
+      const L1 = this.getL1Metrik();
+      const L2 = this.getL2Metrik();
+
+      document.getElementById('L1').innerHTML = L1.toFixed(3);
+      document.getElementById('L2').innerHTML = L2.toFixed(3);
+    }
   }
 
   constVel(time) {
