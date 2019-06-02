@@ -25,6 +25,7 @@ class Car extends Module {
     this.isVisible = true;
     this.zTrack = [];
     this.particles = particles;
+    this.hideTime = 0;
 
     const img = new Image();
 
@@ -72,30 +73,39 @@ class Car extends Module {
     return l1Metrik * this.zTrack.length;
   }
 
+  getL3Metrik() {
+    return this.hideTime / this.getL1Metrik();
+  }
+
 
   update(time) {
-    // if (time > 200) {
-    //   this.setVisibility(false);
-    // }
+    if (time > 200) {
+      this.setVisibility(false);
+    }
 
     this.model.move(time);
 
     if (this.isVisible) {
       this.zTrack.push(this.model.state);
+    } else {
+      this.hideTime += 1;
     }
 
     if (this.filter) {
       this.filter.update(time, this.isVisible ? this.model.state : null);
     }
 
+
     this.draw();
 
     if (this.filter) {
       const L1 = this.getL1Metrik();
       const L2 = this.getL2Metrik();
+      const L3 = this.getL3Metrik();
 
       document.getElementById('L1').innerHTML = L1.toFixed(3);
       document.getElementById('L2').innerHTML = L2.toFixed(3);
+      document.getElementById('L3').innerHTML = L3.toFixed(3);
     }
   }
 
@@ -106,6 +116,10 @@ class Car extends Module {
   setVisibility(isVisible) {
     if (isVisible && !this.filter && this.particles && this.zTrack.length > 5) {
       this.filter = new ParticleFilter(this.particles, this.zTrack);
+    }
+
+    if (!isVisible && this.hideTime) {
+      this.hideTime = 0;
     }
 
     this.isVisible = isVisible;
