@@ -86,7 +86,6 @@ function IDM(aState, bState) {
 
   const sh = s0 + va * T + ((va * dva) / (2 * Math.sqrt(a * b)));
 
-  console.log(a * ((1 - (v / v0) ** bet) - (sh / s) ** 2));
 
   return a * ((1 - (v / v0) ** bet) - (sh / s) ** 2);
 }

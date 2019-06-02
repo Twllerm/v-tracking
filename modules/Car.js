@@ -64,7 +64,7 @@ class Car extends Module {
     const { x: xFilter, y: yFilter } = this.filter.state;
     const { x, y } = this.model;
 
-    return Math.sqrt(((x - xFilter) ** 2) + ((y - yFilter) ** 2));
+    return Math.sqrt(((x - xFilter) ** 2) + ((y - yFilter) ** 2)) / 40;
   }
 
   getL2Metrik() {

@@ -110,16 +110,25 @@ class Road extends Module {
     switch (type) {
       case 'constVel':
         return new Car(this.canvas, this.ctx, {
-          x: x || getRandomArbitrary(10, 300),
+          x: x || getRandomArbitrary(5, 30),
           y,
           movingModel: type,
           movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
           isObserver,
           particles: useFilter ? 100 : 0,
         });
-      case 'followForce':
+      case 'accel':
         return new Car(this.canvas, this.ctx, {
-          x: x || getRandomArbitrary(10, 300),
+          x: x || getRandomArbitrary(5, 30),
+          y,
+          movingModel: type,
+          movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
+          isObserver,
+          particles: useFilter ? 100 : 0,
+        });
+      case 'idm':
+        return new Car(this.canvas, this.ctx, {
+          x: x || getRandomArbitrary(5, 30),
           y,
           movingModel: type,
           movingParams: { velocity: getRandomArbitrary(0.5, 2) },
