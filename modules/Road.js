@@ -117,7 +117,7 @@ class Road extends Module {
           isObserver,
           particles: useFilter ? 100 : 0,
         });
-      case 'accel':
+      case 'accelF':
         return new Car(this.canvas, this.ctx, {
           x: x || getRandomArbitrary(5, 30),
           y,

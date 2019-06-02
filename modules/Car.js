@@ -59,6 +59,9 @@ class Car extends Module {
   updateScene(scene) {
     this.scene = scene;
     this.model.updateScene(scene);
+    if (this.filter) {
+      this.filter.updateScene(scene);
+    }
   }
 
   getL1Metrik() {
@@ -74,21 +77,21 @@ class Car extends Module {
   }
 
   getL3Metrik() {
-    return this.hideTime / this.getL1Metrik();
+    return this.getL1Metrik() / this.hideTime;
   }
 
 
   update(time) {
-    if (time > 200) {
-      this.setVisibility(false);
-    }
+    // if (time > 50) {
+    //   this.setVisibility(false);
+    // }
 
     this.model.move(time);
 
     if (this.isVisible) {
       this.zTrack.push(this.model.state);
     } else {
-      this.hideTime += 1;
+      this.hideTime += 0.1;
     }
 
     if (this.filter) {
@@ -114,13 +117,13 @@ class Car extends Module {
   }
 
   setVisibility(isVisible) {
-    if (isVisible && !this.filter && this.particles && this.zTrack.length > 5) {
-      this.filter = new ParticleFilter(this.particles, this.zTrack);
+    if ((isVisible && !this.filter && this.particles && this.zTrack.length > 5)) {
+      this.filter = new ParticleFilter(this.particles, this.zTrack, this.scene);
     }
 
-    if (!isVisible && this.hideTime) {
-      this.hideTime = 0;
-    }
+    // if (this.isVisible && !isVisible) {
+    //   this.hideTime = 0;
+    // }
 
     this.isVisible = isVisible;
   }
