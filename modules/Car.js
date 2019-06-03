@@ -59,6 +59,7 @@ class Car extends Module {
   updateScene(scene) {
     this.scene = scene;
     this.model.updateScene(scene);
+
     if (this.filter) {
       this.filter.updateScene(scene);
     }
@@ -105,10 +106,12 @@ class Car extends Module {
       const L1 = this.getL1Metrik();
       const L2 = this.getL2Metrik();
       const L3 = this.getL3Metrik();
+      const TH = this.hideTime;
 
       document.getElementById('L1').innerHTML = L1.toFixed(3);
       document.getElementById('L2').innerHTML = L2.toFixed(3);
       document.getElementById('L3').innerHTML = L3.toFixed(3);
+      document.getElementById('TH').innerHTML = TH.toFixed(3);
     }
   }
 
@@ -121,9 +124,6 @@ class Car extends Module {
       this.filter = new ParticleFilter(this.particles, this.zTrack, this.scene);
     }
 
-    // if (this.isVisible && !isVisible) {
-    //   this.hideTime = 0;
-    // }
 
     this.isVisible = isVisible;
   }
@@ -157,7 +157,7 @@ class Car extends Module {
       partStates.forEach((p) => {
         this.ctx.save();
         this.ctx.fillStyle = '#0000FF';
-        this.ctx.globalAlpha = p.weight;
+        this.ctx.globalAlpha = p.weight / 2;
         // console.log(this.filter.state);
         this.ctx.rect(p.x, p.y, 40, 20);
         this.ctx.fill();

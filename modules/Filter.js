@@ -64,7 +64,6 @@ function followForce(aState, bStare) {
 }
 
 function IDM(aState, bState) {
-  const xDiff = aState.x - bState.x;
   const yDiff = aState.y - bState.y;
 
   if (Math.abs(yDiff) > 35) {
@@ -72,9 +71,6 @@ function IDM(aState, bState) {
   }
 
 
-  // if (xDiff < 0) {
-  //   return 0;
-  // }
 
   const a = 0.01;
   const b = 0.005;
@@ -113,7 +109,6 @@ class CarModel {
     this.weight = 1;
     this.isParticle = isParticle;
     this.scene = [];
-    console.log(this.movingModel);
   }
 
   move(time, mess = 'kek') {
@@ -129,12 +124,6 @@ class CarModel {
     this.scene = scene;
   }
 
-  // followForce(time) {
-  //   const forces = this.scene.map(car => followForce(this.state, car.state));
-  //   const maxForce = _.sum(forces);
-  //   this.velocity += maxForce;
-  //   this.constVel(time);
-  // }
 
   accelF(time) {
     this.velocity += this.accel;
@@ -142,7 +131,6 @@ class CarModel {
   }
 
   idm(time) {
-    // const forces = this.scene.map(car => followForce(this.state, car.state));
 
     const directInFront = this.scene.map((car) => {
       if (Math.abs(car.state.y - this.state.y) > 10 || car.state.x - this.state.x < 0) {
@@ -153,7 +141,6 @@ class CarModel {
 
     const directIndex = directInFront.indexOf(Math.min(...directInFront));
 
-    // const maxForce = _.sum(forces);
     this.velocity += IDM(this.state, this.scene[directIndex].state);
     this.constVel(time);
   }
@@ -179,17 +166,16 @@ class ParticleFilter {
 
 
     const badDisp = {
-      x: 100, y: 30, velocity: 1, accel: 0.001,
+      x: 20, y: 20, velocity: 1, accel: 0.001,
     };
 
     const goodDisp = {
-      x: 100, y: 30, velocity: 1, accel: 0.001,
+      x: 20, y: 20, velocity: 1, accel: 0.001,
     };
 
     const moviengModels = ['constVel', 'accelF', 'idm'];
 
-
-    this.particles = _.range(500).map((n) => {
+    this.particles = _.range(50).map((n) => {
       const disp = n % 2 === 0 ? goodDisp : badDisp;
       const x = getRandomArbitrary(lastZ.x - disp.x, lastZ.x + disp.x);
       const y = getRandomArbitrary(lastZ.y - disp.y, lastZ.y + disp.y);
@@ -197,7 +183,7 @@ class ParticleFilter {
       const accel = getRandomArbitrary(lastZ.accel - disp.accel, lastZ.accel + disp.accel);
 
       const {
-        x: trash, y: trashh, ...movingParams
+        x: trash, y: trashh,
       } = lastZ;
 
 
@@ -216,49 +202,58 @@ class ParticleFilter {
     this.particles.forEach(p => p.updateScene(scene));
   }
 
-  // fakeUpdate() {
-  //   for (let i = 0; i < this.particles.length; i++) {
-  //     this.particles[i].updateWeight(Math.min(getRandomArbitrary(this.particles[i].weight - 0.05, this.particles[i].weight + 0.05), 0.6));
-  //   }
-  // }
+
+  resample(weights) {
+    // const maxW = Math.max(...weights);
+    // const sorted = this.particles.sort((a, b) => a.weight > b.wehgit);
+    // const sliced = sorted.slice(0, this.particles.length / 2);
+    // this.particles = sliced.concat(sliced);
+
+    // let index = Math.round(getRandomArbitrary(0, 3));
+    // let betta = 0;
+    // const N = this.particles.length;
+    // const newParticles = [];
+
+    // _.range(this.particles.length).map(() => {
+    //   betta += getRandomArbitrary(0, maxW);
+    //   while (betta > weights[index]) {
+    //     betta -= weights[index];
+    //     index = (index + 1) % N;
+    //     newParticles.push(this.particles[index]);
+    //   }
+    // });
+
+    // console.log(newParticles);
+
+    // const weightss = this.particles.map(p => p.weight);
+    // const sumW = _.sum(weightss);
+
+
+    // this.particles = newParticles;
+    // this.particlees = this.particles.sort((a, b) => a.weight > b.weight).slice(0, this.particles.length - this.particles.length / 3);
+  }
 
   update(time, zState) {
     this.move(time);
+
+    if (!zState && !this.resmapled) {
+      this.resampled = true;
+      this.resample(this.particles.map(p => p.weight));
+      return;
+    }
+
 
     if (!zState) {
       return;
     }
 
-    const states = [];
-
-    this.particles.forEach(p => states.push(p.state));
-
-    const diffs = states.map(state => opp(state, zState, (a, b) => (a - b) ** 2));
-
-    const stubState = _.mapValues(this.particles[0].state, () => []);
-
-    const allDiffs = diffs.reduce(
-      (acc, diff) => opp(acc, diff, (arr, val) => arr.concat([val])), stubState,
-    );
-
-    const normalizedDiffs = _.mapValues(allDiffs, normalize);
-
-    const unzippedDiffs = _.unzip(_.values(normalizedDiffs));
-
-    const norms = unzippedDiffs.map(diff => _.sum(diff));
-
-    const sumDiffs = _.sum(norms);
     const weights = this.particles.map(p => fullFScore(p.state, zState));
     const sumWehigths = _.sum(weights);
     const normWeights = weights.map(w => w / sumWehigths);
 
-    for (let i = 0; i < norms.length; i++) {
+    for (let i = 0; i < this.particles.length; i++) {
       this.particles[i].updateWeight(normWeights[i]);
     }
-
-    // this.fakeUpdate();
-
-    // this.particles = this.particles.filter(p => p.weight > 0.0001);
   }
 
   get state() {

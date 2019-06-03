@@ -95,7 +95,7 @@ class Road extends Module {
 
 
   drawCars(nCars = 2) {
-    this.cars = _.range(nCars).map(n => this.drawCar(null, (n % 4) * 40 + Math.random() * 15, n === 1 ? 'idm' : 'constVel', n === 1, n === 0));
+    this.cars = _.range(nCars).map(n => this.drawCar(null, (n % 4) * 40 + Math.random() * 15, n === 1 ? 'idm' : 'accelF', n === 1, n === 0));
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
