@@ -1,7 +1,7 @@
 
 const Module = require('./Module');
 const { Wall, Point, getHitpoints } = require('./geometry');
-const { CarModel, ParticleFilter } = require('./Filter');
+const { CarModel, ParticleFilter, SuperFilter } = require('./Filter');
 // const carAsset = require('../assets/car.svg');
 
 const CONSTANTS = {
@@ -96,7 +96,7 @@ class Car extends Module {
     }
 
     if (this.filter) {
-      this.filter.update(time, this.isVisible ? this.model.state : null);
+      this.filter.update(time, this.isVisible ? this.model.state : null, this.hideTime);
     }
 
 
@@ -122,6 +122,7 @@ class Car extends Module {
   setVisibility(isVisible) {
     if ((isVisible && !this.filter && this.particles && this.zTrack.length > 5)) {
       this.filter = new ParticleFilter(this.particles, this.zTrack, this.scene);
+      // this.filter = new SuperFilter(this.particles, this.zTrack, this.scene);
     }
 
 
