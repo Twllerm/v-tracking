@@ -87,7 +87,6 @@ function IDM(aState, bState) {
   return a * ((1 - (v / v0) ** bet) - (sh / s) ** 2);
 }
 
-
 class CarModel {
   constructor(
     x = 0,

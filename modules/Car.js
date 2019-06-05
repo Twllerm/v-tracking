@@ -83,10 +83,6 @@ class Car extends Module {
 
 
   update(time) {
-    // if (time > 50) {
-    //   this.setVisibility(false);
-    // }
-
     this.model.move(time);
 
     if (this.isVisible) {
@@ -98,7 +94,6 @@ class Car extends Module {
     if (this.filter) {
       this.filter.update(time, this.isVisible ? this.model.state : null, this.hideTime);
     }
-
 
     this.draw();
 
