@@ -211,21 +211,21 @@ class ParticleFilter {
 
 
     const badDisp = {
-      x: 20, y: 20, velocity: 1, accel: 0.001,
+      x: 10, y: 10, velocity: 0.5, accel: 0.001,
     };
 
     const goodDisp = {
-      x: 20, y: 20, velocity: 1, accel: 0.001,
+      x: 20, y: 20, velocity: 0.5, accel: 0.001,
     };
 
     const moviengModels = ['constVel', 'accelF', 'idm'];
 
-    this.particles = _.range(200).map((n) => {
+    this.particles = _.range(300).map((n) => {
       const disp = n % 2 === 0 ? goodDisp : badDisp;
       const x = getRandomArbitrary(lastZ.x - disp.x, lastZ.x + disp.x);
       const y = getRandomArbitrary(lastZ.y - disp.y, lastZ.y + disp.y);
-      const velocity = getRandomArbitrary(lastZ.velocity - disp.velocity, lastZ.velocity + disp.velocity);
-      const accel = getRandomArbitrary(lastZ.accel - disp.accel, lastZ.accel + disp.accel);
+      const velocity = getRandomArbitrary(Math.max(1, lastZ.velocity - disp.velocity), lastZ.velocity + disp.velocity);
+      const accel = getRandomArbitrary(Math.max(lastZ.accel - disp.accel, 0), lastZ.accel + disp.accel);
 
       const {
         x: trash, y: trashh,
@@ -258,7 +258,7 @@ class ParticleFilter {
 
     if (!zState) {
       const disp = 5 * hideTime;
-      const zDisp = _.mapValues(this.state, val => val + getRandomArbitrary(disp / 1000, -disp / 1000));
+      const zDisp = _.mapValues(this.state, val => val);
       const weights = this.particles.map(p => fullFScore(p.state, zDisp, disp));
       const sumWehigths = _.sum(weights);
 
@@ -269,7 +269,6 @@ class ParticleFilter {
       for (let i = 0; i < this.particles.length; i++) {
         this.particles[i].updateWeight(normWeights[i]);
       }
-
       return;
     }
 

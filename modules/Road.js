@@ -44,7 +44,7 @@ class Road extends Module {
       const y = event.pageY - elemTop;
 
 
-      addCar(800 - y, x, 'constVel');
+      addCar(800 - y, null, x, 'constVel');
     });
 
     // window.setInterval(() => {
@@ -66,9 +66,6 @@ class Road extends Module {
 
 
     this.cars.forEach(car => car.update(time));
-
-    const observer = this.cars.find(car => car.isObserver);
-    window.scroll(0, window.innerHeight - observer.x);
   }
 
   drawLanes() {
@@ -95,7 +92,7 @@ class Road extends Module {
 
 
   drawCars(nCars = 3) {
-    this.cars = _.range(nCars).map(n => this.drawCar(null, (n % 4) * 40 + Math.random() * 15, n === 2 ? 'idm' : 'accelF', n === 2, n === 0));
+    this.cars = _.range(nCars).map(n => this.drawCar(null, n, (n % 4) * 40 + Math.random() * 15, n === 2 ? 'idm' : 'accelF', n === 2, n === 0));
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
@@ -106,11 +103,13 @@ class Road extends Module {
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
-  drawCar(x = null, y, type = 'constVel', isObserver, useFilter) {
+  drawCar(x, n = null, y, type = 'constVel', isObserver, useFilter) {
+    const xs = [5, 30, 10];
+
     switch (type) {
       case 'constVel':
         return new Car(this.canvas, this.ctx, {
-          x: x || getRandomArbitrary(5, 30),
+          x: x || xs[n],
           y,
           movingModel: type,
           movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
@@ -119,7 +118,7 @@ class Road extends Module {
         });
       case 'accelF':
         return new Car(this.canvas, this.ctx, {
-          x: x || getRandomArbitrary(5, 30),
+          x: x || xs[n],
           y,
           movingModel: type,
           movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
@@ -128,7 +127,7 @@ class Road extends Module {
         });
       case 'idm':
         return new Car(this.canvas, this.ctx, {
-          x: x || getRandomArbitrary(5, 30),
+          x: x || xs[n],
           y,
           movingModel: type,
           movingParams: { velocity: getRandomArbitrary(0.5, 2) },

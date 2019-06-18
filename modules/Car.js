@@ -2,6 +2,7 @@
 const Module = require('./Module');
 const { Wall, Point, getHitpoints } = require('./geometry');
 const { CarModel, ParticleFilter, SuperFilter } = require('./Filter');
+const Chart = require('chart.js');
 // const carAsset = require('../assets/car.svg');
 
 const CONSTANTS = {
@@ -26,6 +27,23 @@ class Car extends Module {
     this.zTrack = [];
     this.particles = particles;
     this.hideTime = 0;
+    this.l1 = [];
+    this.l2 = [];
+    this.l3 = [];
+    this.t = [];
+    // const ctx_ = document.getElementById('myChart').getContext('2d');
+
+    // const data = this.l1.map((l, i) => ({ x: this.t[i], y: l }));
+
+    // const myChart = new Chart(ctx_, {
+    //   type: 'bar',
+    //   data: this.l1,
+    //   options: {
+    //     showLines: true, // disable for all datasets
+    //   },
+    // });
+
+    // this.chart = myChart;
 
     const img = new Image();
 
@@ -56,6 +74,61 @@ class Car extends Module {
     this.draw();
   }
 
+  //   function addData(chart, label, data) {
+  //     chart.data.labels.push(label);
+  //     chart.data.datasets.forEach((dataset) => {
+  //         dataset.data.push(data);
+  //     });
+  //     chart.update();
+  // }
+
+  drawCharts() {
+    if (this.filter) {
+      const ctx = document.getElementById('myChart').getContext('2d');
+
+      // this.t.map(t => t);
+
+      // const data = this.l1.map((l, i) => ({ x: this.t[i], y: l }));
+
+      if (this.chart) {
+        this.chart.data.datasets[0].data = this.l1.slice(this.l1.length - 100, this.l1.length - 1);
+        this.chart.data.labels = this.t.slice(this.t.length - 100, this.t.length - 1);
+        this.chart.update();
+        return;
+      }
+
+
+      this.chart = new Chart(ctx, {
+        // The type of chart we want to create
+        type: 'line',
+
+
+        // The data for our dataset
+        data: {
+          labels: this.t,
+          datasets: [{
+            label: 'L1',
+            // backgroundColor: 'rgb(255, 99, 132)',
+            borderColor: 'rgb(255, 99, 132)',
+            // data: this.l1,
+            data: this.l1,
+          },
+
+          ],
+        },
+
+        // Configuration options go here
+        options: {
+          scales: {
+            yAxes: [{
+              stacked: true,
+            }],
+          },
+        },
+      });
+    }
+  }
+
   updateScene(scene) {
     this.scene = scene;
     this.model.updateScene(scene);
@@ -66,23 +139,31 @@ class Car extends Module {
   }
 
   getL1Metrik() {
+    console.log('adssa');
     const { x: xFilter, y: yFilter } = this.filter.state;
     const { x, y } = this.model;
+    const res = Math.sqrt(((x - xFilter) ** 2) + ((y - yFilter) ** 2)) / 40;
+    // console.log(res);
+    this.l1.push(res);
 
-    return Math.sqrt(((x - xFilter) ** 2) + ((y - yFilter) ** 2)) / 40;
+    return res;
   }
 
   getL2Metrik() {
     const l1Metrik = this.getL1Metrik();
-    return l1Metrik * this.zTrack.length;
+    const res = l1Metrik * this.zTrack.length;
+    this.l2.push(res);
+    return res;
   }
 
   getL3Metrik() {
-    return this.getL1Metrik() / this.hideTime;
+    const res = this.getL1Metrik() / this.hideTime;
+    this.l3.push(res);
+    return res;
   }
 
-
   update(time) {
+    this.t.push(time.toFixed(2));
     this.model.move(time);
 
     if (this.isVisible) {
@@ -103,10 +184,11 @@ class Car extends Module {
       const L3 = this.getL3Metrik();
       const TH = this.hideTime;
 
-      document.getElementById('L1').innerHTML = L1.toFixed(3);
-      document.getElementById('L2').innerHTML = L2.toFixed(3);
-      document.getElementById('L3').innerHTML = L3.toFixed(3);
-      document.getElementById('TH').innerHTML = TH.toFixed(3);
+
+      // document.getElementById('L1').innerHTML = L1.toFixed(3);
+      document.getElementById('Nz').innerHTML = this.zTrack.length;
+      // document.getElementById('L3').innerHTML = L3.toFixed(3);
+      // document.getElementById('TH').innerHTML = TH.toFixed(3);
     }
   }
 
@@ -159,6 +241,8 @@ class Car extends Module {
         this.ctx.fill();
         this.ctx.restore();
       });
+
+      this.drawCharts();
     }
 
     const width = 40;

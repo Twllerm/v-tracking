@@ -8,16 +8,25 @@
   
     <canvas style="margin-top: 300px; transform: rotate(-90deg)" id="canvas" width="5000" height="600"></canvas>
 
-    <div style="position: fixed; right: 500px; bottom: 100px;">
+
+    <div style="position: absolute; right: 10px; left: 300px; bottom: 10px; width: 400px !important; height: 100px;" >
+      <canvas id="myChart" width="100" height="100"></canvas>
+    </div>
+
+    <div style="position: fixed; right: 530px; bottom: 415px; font-weight: bold; font-family: arial;">
       <div>
+        <span>Nz=</span>
+        <span id="Nz">0</span>
+      </div>
+    </div>
+
+
+      <!-- <div>
         <span>L1=</span>
         <span id="L1">0</span>
       </div>
   
-      <div>
-        <span>L2=</span>
-        <span id="L2">0</span>
-      </div>
+     
 
       <div>
         <span>L3=</span>
@@ -28,12 +37,16 @@
         <span>TH=</span>
         <span id="TH">0</span>
       </div>
-    </div>
+    </div> -->
    
 
     <script>
       // You can also require other files to run in this process
       require('./renderer.js')
     </script>
+
+<script>
+  
+  </script>
   </body>
 </html>
