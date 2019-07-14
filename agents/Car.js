@@ -1,16 +1,15 @@
 
-const Module = require('./Module');
-const { Wall, Point, getHitpoints } = require('./geometry');
-const { CarModel, ParticleFilter, SuperFilter } = require('./Filter');
+const Agent = require('./Agent');
+const { Wall, Point, getHitpoints } = require('../model/geometry');
+const { CarModel, ParticleFilter } = require('../model/Filter');
 const Chart = require('chart.js');
-// const carAsset = require('../assets/car.svg');
 
 const CONSTANTS = {
   width: 40,
   height: 20,
 };
 
-class Car extends Module {
+class Car extends Agent {
   constructor(canvas, ctx, {
     x = 0,
     y,
@@ -31,19 +30,6 @@ class Car extends Module {
     this.l2 = [];
     this.l3 = [];
     this.t = [];
-    // const ctx_ = document.getElementById('myChart').getContext('2d');
-
-    // const data = this.l1.map((l, i) => ({ x: this.t[i], y: l }));
-
-    // const myChart = new Chart(ctx_, {
-    //   type: 'bar',
-    //   data: this.l1,
-    //   options: {
-    //     showLines: true, // disable for all datasets
-    //   },
-    // });
-
-    // this.chart = myChart;
 
     const img = new Image();
 
@@ -74,21 +60,9 @@ class Car extends Module {
     this.draw();
   }
 
-  //   function addData(chart, label, data) {
-  //     chart.data.labels.push(label);
-  //     chart.data.datasets.forEach((dataset) => {
-  //         dataset.data.push(data);
-  //     });
-  //     chart.update();
-  // }
-
   drawCharts() {
     if (this.filter) {
       const ctx = document.getElementById('myChart').getContext('2d');
-
-      // this.t.map(t => t);
-
-      // const data = this.l1.map((l, i) => ({ x: this.t[i], y: l }));
 
       if (this.chart) {
         this.chart.data.datasets[0].data = this.l1.slice(this.l1.length - 100, this.l1.length - 1);
@@ -97,27 +71,17 @@ class Car extends Module {
         return;
       }
 
-
       this.chart = new Chart(ctx, {
-        // The type of chart we want to create
         type: 'line',
-
-
-        // The data for our dataset
         data: {
           labels: this.t,
           datasets: [{
             label: 'L1',
-            // backgroundColor: 'rgb(255, 99, 132)',
             borderColor: 'rgb(255, 99, 132)',
-            // data: this.l1,
             data: this.l1,
           },
-
           ],
         },
-
-        // Configuration options go here
         options: {
           scales: {
             yAxes: [{
@@ -139,11 +103,9 @@ class Car extends Module {
   }
 
   getL1Metrik() {
-    console.log('adssa');
     const { x: xFilter, y: yFilter } = this.filter.state;
     const { x, y } = this.model;
     const res = Math.sqrt(((x - xFilter) ** 2) + ((y - yFilter) ** 2)) / 40;
-    // console.log(res);
     this.l1.push(res);
 
     return res;
@@ -179,16 +141,7 @@ class Car extends Module {
     this.draw();
 
     if (this.filter) {
-      const L1 = this.getL1Metrik();
-      const L2 = this.getL2Metrik();
-      const L3 = this.getL3Metrik();
-      const TH = this.hideTime;
-
-
-      // document.getElementById('L1').innerHTML = L1.toFixed(3);
       document.getElementById('Nz').innerHTML = this.zTrack.length;
-      // document.getElementById('L3').innerHTML = L3.toFixed(3);
-      // document.getElementById('TH').innerHTML = TH.toFixed(3);
     }
   }
 
@@ -199,7 +152,6 @@ class Car extends Module {
   setVisibility(isVisible) {
     if ((isVisible && !this.filter && this.particles && this.zTrack.length > 5)) {
       this.filter = new ParticleFilter(this.particles, this.zTrack, this.scene);
-      // this.filter = new SuperFilter(this.particles, this.zTrack, this.scene);
     }
 
 
@@ -212,7 +164,7 @@ class Car extends Module {
     }
 
     if (this.img) {
-	    this.ctx.save();
+      this.ctx.save();
 
       if (!this.isVisible) {
         this.ctx.globalAlpha = 0.5;
@@ -225,7 +177,6 @@ class Car extends Module {
     if (this.filter) {
       this.ctx.save();
       this.ctx.fillStyle = '#0000FF';
-      // console.log(this.filter.state);
       this.ctx.rect(this.filter.state.x, this.filter.state.y, 40, 20);
       this.ctx.fill();
       this.ctx.restore();
@@ -236,7 +187,6 @@ class Car extends Module {
         this.ctx.save();
         this.ctx.fillStyle = '#0000FF';
         this.ctx.globalAlpha = p.weight / 2;
-        // console.log(this.filter.state);
         this.ctx.rect(p.x, p.y, 40, 20);
         this.ctx.fill();
         this.ctx.restore();
@@ -263,7 +213,7 @@ class Car extends Module {
     const fromX = this.x + width / 2;
     const fromY = this.y + height / 2;
 
-    // Render all the walls
+    // Render all walls
     this.ctx.beginPath();
 
     for (let i = 0; i < this.bounds.length; i++) {

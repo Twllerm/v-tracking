@@ -1,13 +1,6 @@
 const _ = require('lodash');
 const m = require('mathjs');
 
-const movingModels = {
-  constVel: 'constVel',
-};
-
-const movingParamsSchema = {
-  constVel: ['velocity'],
-};
 
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
@@ -17,16 +10,7 @@ function opp(object, other, callback) {
   return _.mapValues(object, (val, key) => callback(val, other[key]));
 }
 
-function normalize(arr) {
-  const min = m.min(arr);
-  const max = m.max(arr);
-
-
-  return arr.map(x => (x - min) / (max - min));
-}
-
 function fScore(particleState, trueState, sigm = 1) {
-  const mu = trueState;
   const a = 1 / m.sqrt((2 * Math.PI * sigm));
 
   const e = m.exp(-((trueState - particleState) ** 2) / sigm);
@@ -38,28 +22,6 @@ function fullFScore(particleState, trueState, sigm = 1) {
   const result = opp(particleState, trueState, (a, b) => fScore(a, b, sigm));
 
   return _.values(result).reduce((acc, x) => acc * x, 1);
-}
-
-function followForce(aState, bStare) {
-  const actionT = 10;
-  const dangerT = 3;
-  const xDiff = aState.x - bStare.x;
-  const yDiff = aState.y - bStare.y;
-  const diff = xDiff;
-
-  if (Math.abs(yDiff) > 10) {
-    return 0;
-  }
-
-  if (Math.abs(diff) < actionT) {
-    return 0;
-  }
-
-  if (xDiff < 0) {
-    return 0;
-  }
-
-  return -(dangerT - xDiff) / 100;
 }
 
 function IDM(aState, bState) {
@@ -108,7 +70,7 @@ class CarModel {
     this.scene = [];
   }
 
-  move(time, mess = 'kek') {
+  move(time) {
     this[this.movingModel](time);
     return this;
   }
@@ -120,7 +82,6 @@ class CarModel {
   updateScene(scene) {
     this.scene = scene;
   }
-
 
   accelF(time) {
     this.velocity += this.accel;
@@ -149,90 +110,28 @@ class CarModel {
     };
   }
 
-
   updateWeight(w) {
     this.weight = w;
   }
 }
 
-class SuperFilter {
-  constructor(nParticles, zTrack, scene) {
-    this.filters = [
-      new ParticleFilter(nParticles / 3, zTrack, scene, 'constVel'),
-      new ParticleFilter(nParticles / 3, zTrack, scene, 'accelF'),
-      new ParticleFilter(nParticles / 3, zTrack, scene, 'idm'),
-    ];
-
-    this.weights = [1, 1, 1];
-  }
-
-  updateScene(scene) {
-    this.filters.forEach(f => f.updateScene(scene));
-  }
-
-  update(time, zState) {
-    this.filters.forEach(f => f.update(time, zState));
-
-    if (!zState) {
-      return;
-    }
-
-    const states = this.filters.map(f => f.state);
-
-    this.weights = this.weights.map((w, i) => fullFScore(states[i], zState));
-  }
-
-  get state() {
-    const stubState = _.mapValues(this.filters[0].state, () => []);
-
-    const states = this.filters.map(f => f.state);
-
-    const allStates = states.reduce(
-      (acc, state) => opp(acc, state, (arr, val) => arr.concat([val])), stubState,
-    );
-
-    const avgState = _.mapValues(allStates,
-      values => values.reduce((acc, val, index) => acc + (val * this.weights[index]), 0));
-
-    return avgState;
-  }
-
-  get particlesState() {
-    const particles = this.filters.reduce((acc, f) => acc.concat(...f.particlesState), []);
-
-    return particles;
-  }
-}
-
 class ParticleFilter {
-  constructor(nParticles, zTrack, scene, model = null) {
-    const [lastZ, previousZ] = _.reverse(zTrack);
+  constructor(nParticles, zTrack, scene, model = 'idm') {
+    const [lastZ] = _.reverse(zTrack);
     this.scene = scene;
 
-
-    const badDisp = {
+    const disp = {
       x: 10, y: 10, velocity: 0.5, accel: 0.001,
     };
 
-    const goodDisp = {
-      x: 20, y: 20, velocity: 0.5, accel: 0.001,
-    };
 
-    const moviengModels = ['constVel', 'accelF', 'idm'];
-
-    this.particles = _.range(300).map((n) => {
-      const disp = n % 2 === 0 ? goodDisp : badDisp;
+    this.particles = _.range(300).map(() => {
       const x = getRandomArbitrary(lastZ.x - disp.x, lastZ.x + disp.x);
       const y = getRandomArbitrary(lastZ.y - disp.y, lastZ.y + disp.y);
       const velocity = getRandomArbitrary(Math.max(1, lastZ.velocity - disp.velocity), lastZ.velocity + disp.velocity);
       const accel = getRandomArbitrary(Math.max(lastZ.accel - disp.accel, 0), lastZ.accel + disp.accel);
 
-      const {
-        x: trash, y: trashh,
-      } = lastZ;
-
-
-      const car = new CarModel(x, y, model || moviengModels[n % 3], { velocity, accel }, true);
+      const car = new CarModel(x, y, model, { velocity, accel }, true);
       car.updateScene(this.scene);
 
       return car;
@@ -247,28 +146,10 @@ class ParticleFilter {
     this.particles.forEach(p => p.updateScene(scene));
   }
 
-
-  resample(weights) {
-
-  }
-
   update(time, zState, hideTime = 0) {
     this.move(time);
 
-
     if (!zState) {
-      const disp = 5 * hideTime;
-      const zDisp = _.mapValues(this.state, val => val);
-      const weights = this.particles.map(p => fullFScore(p.state, zDisp, disp));
-      const sumWehigths = _.sum(weights);
-
-
-      const normWeights = weights.map(w => w / sumWehigths);
-
-
-      for (let i = 0; i < this.particles.length; i++) {
-        this.particles[i].updateWeight(normWeights[i]);
-      }
       return;
     }
 
@@ -276,7 +157,6 @@ class ParticleFilter {
     const weights = this.particles.map(p => fullFScore(p.state, zState, zState ? 5 : 30));
     const sumWehigths = _.sum(weights);
     const normWeights = weights.map(w => w / sumWehigths);
-    // const diff = this.state.x - zState.x;
 
     for (let i = 0; i < this.particles.length; i++) {
       this.particles[i].updateWeight(normWeights[i]);
@@ -309,5 +189,4 @@ module.exports = {
   ParticleFilter,
   CarModel,
   getRandomArbitrary,
-  SuperFilter,
 };

@@ -1,10 +1,9 @@
-class Module {
+class Agent {
   constructor(canvas, ctx) {
     this.canvas = canvas;
     this.ctx = ctx;
 
     this.addBindings();
-    // this.update();
     this.mount();
   }
 
@@ -40,4 +39,4 @@ class Module {
   }
 }
 
-module.exports = Module;
+module.exports = Agent;

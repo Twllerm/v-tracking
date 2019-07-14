@@ -1,14 +1,35 @@
 
 
 const _ = require('lodash');
-const Module = require('./Module');
+const Agent = require('./Agent');
 const Car = require('./Car');
 
 const CONSTANTS = {
-  width: 2,
+  borderWidth: 2,
+  laneWidth: 40,
 };
 
-class Road extends Module {
+const roadScene = [
+  {
+    startX: 5,
+    nLane: 0,
+    movingModel: 'idm',
+    virtualTracking: true,
+  },
+  {
+    startX: 20,
+    nLane: 1,
+    movingModel: 'accelF',
+  },
+  {
+    startX: 5,
+    nLane: 2,
+    movingModel: 'accelF',
+    isObserver: true,
+  },
+];
+
+class Road extends Agent {
   constructor(canvas, ctx, nLines = 2, nCars = 4) {
     super(canvas, ctx);
 
@@ -18,6 +39,7 @@ class Road extends Module {
 
   addBindings() {
     super.addBindings();
+
     this.drawCar = this.drawCar.bind(this);
     this.drawCars = this.drawCars.bind(this);
   }
@@ -25,6 +47,7 @@ class Road extends Module {
   mount() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
+
     window.scroll(0, window.innerHeight);
 
     this.drawLanes();
@@ -44,12 +67,8 @@ class Road extends Module {
       const y = event.pageY - elemTop;
 
 
-      addCar(800 - y, null, x, 'constVel');
+      addCar(800 - y, x, 'constVel');
     });
-
-    // window.setInterval(() => {
-
-    // }, 300);
   }
 
 
@@ -64,20 +83,19 @@ class Road extends Module {
       this.drawCars();
     }
 
-
     this.cars.forEach(car => car.update(time));
   }
 
   drawLanes() {
     this.ctx.beginPath();
     this.ctx.fillStyle = '#000';
-    this.ctx.rect(0, 0, this.width, CONSTANTS.width);
+    this.ctx.rect(0, 0, this.width, CONSTANTS.borderWidth);
     this.ctx.fill();
 
     _.range(this.nLines).map(i => this.drawLane(i));
 
     this.ctx.beginPath();
-    this.ctx.rect(0, this.nLines * 40, this.width, CONSTANTS.width);
+    this.ctx.rect(0, this.nLines * 40, this.width, CONSTANTS.borderWidth);
     this.ctx.fill();
   }
 
@@ -90,10 +108,25 @@ class Road extends Module {
     this.ctx.stroke();
   }
 
+  resolveLanePosition(nLane) {
+    return nLane * CONSTANTS.laneWidth + (Math.random() * 15);
+  }
 
-  drawCars(nCars = 3) {
-    this.cars = _.range(nCars).map(n => this.drawCar(null, n, (n % 4) * 40 + Math.random() * 15, n === 2 ? 'idm' : 'accelF', n === 2, n === 0));
+  syncAgentsContext() {
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
+  }
+
+  drawCars() {
+    this.cars = roadScene
+      .map(config => this.drawCar(
+        config.startX,
+        this.resolveLanePosition(config.nLane),
+        config.movingModel,
+        config.isObserver,
+        config.virtualTracking,
+      ));
+
+    this.syncAgentsContext();
   }
 
   addCar(...args) {
@@ -103,40 +136,15 @@ class Road extends Module {
     this.cars.forEach(car => car.updateScene(this.cars.filter(c => c.id !== car.id)));
   }
 
-  drawCar(x, n = null, y, type = 'constVel', isObserver, useFilter) {
-    const xs = [5, 30, 10];
-
-    switch (type) {
-      case 'constVel':
-        return new Car(this.canvas, this.ctx, {
-          x: x || xs[n],
-          y,
-          movingModel: type,
-          movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
-          isObserver,
-          particles: useFilter ? 100 : 0,
-        });
-      case 'accelF':
-        return new Car(this.canvas, this.ctx, {
-          x: x || xs[n],
-          y,
-          movingModel: type,
-          movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
-          isObserver,
-          particles: useFilter ? 100 : 0,
-        });
-      case 'idm':
-        return new Car(this.canvas, this.ctx, {
-          x: x || xs[n],
-          y,
-          movingModel: type,
-          movingParams: { velocity: getRandomArbitrary(0.5, 2) },
-          isObserver,
-          particles: useFilter ? 100 : 0,
-        });
-      default:
-        return null;
-    }
+  drawCar(x, y, movingModel, isObserver, virtualTracking) {
+    return new Car(this.canvas, this.ctx, {
+      x,
+      y,
+      movingModel,
+      movingParams: { velocity: getRandomArbitrary(0.5, 2), accel: getRandomArbitrary(0, 0.002) },
+      isObserver,
+      particles: virtualTracking ? 100 : 0,
+    });
   }
 
   cameraFollow() {

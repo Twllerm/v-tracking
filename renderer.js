@@ -2,16 +2,17 @@
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
 
-const Lines = require('./modules/Lines');
-const Road = require('./modules/Road');
+const Road = require('./agents/Road');
 
 class Renderer {
   constructor() {
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
+
     this.ctx._onClick = (func) => {
       this.canvas.addEventListener('click', func);
     };
+
     this.width = null;
     this.height = null;
     this.addBindings();
