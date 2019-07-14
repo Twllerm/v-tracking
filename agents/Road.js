@@ -67,7 +67,7 @@ class Road extends Agent {
       const y = event.pageY - elemTop;
 
 
-      addCar(800 - y, x, 'constVel');
+      addCar(1150 - y, x - 240, 'constVel');
     });
   }
 
