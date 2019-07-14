@@ -175,6 +175,12 @@ class Car extends Agent {
     }
 
     if (this.filter) {
+      const L1 = this.getL1Metrik();
+      const L2 = this.getL2Metrik();
+      const L3 = this.getL3Metrik();
+      const TH = this.hideTime;
+
+
       this.ctx.save();
       this.ctx.fillStyle = '#0000FF';
       this.ctx.rect(this.filter.state.x, this.filter.state.y, 40, 20);
